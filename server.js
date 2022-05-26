@@ -4,10 +4,12 @@ let tweets = [
   {
     id: "1",
     text: "hello one",
+    userId: "2",
   },
   {
     id: "2",
     text: "hello two",
+    userId: "1",
   },
 ];
 
@@ -29,8 +31,14 @@ const typeDefs = gql`
     id: ID!
     firstName: String!
     lastName: String!
+    """
+    Is the sum of firstName and lastname as a string
+    """
     fullName: String!
   }
+  """
+  Tweet object represents a resource for a Tweet.
+  """
   type Tweet {
     id: ID!
     text: String!
@@ -44,6 +52,9 @@ const typeDefs = gql`
   }
   type Mutation {
     postTweet(text: String!, userId: ID!): Tweet!
+    """
+    Deletes a Tweet if found, else return false.
+    """
     deleteTweet(id: ID!): Boolean!
   }
 `;
@@ -63,12 +74,17 @@ const resolvers = {
   },
   Mutation: {
     postTweet(_, { text, userId }) {
-      const newTweet = {
-        id: tweets.length + 1,
-        text,
-      };
-      tweets.push(newTweet);
-      return newTweet;
+      const user = users.findIndex((user) => user.id === userId);
+      console.log(user);
+      if (user !== -1) {
+        const newTweet = {
+          id: tweets.length + 1,
+          text,
+          userId,
+        };
+        tweets.push(newTweet);
+        return newTweet;
+      } else return;
     },
     deleteTweet(_, { id }) {
       const tweet = tweets.find((tweet) => tweet.id === id);
@@ -78,10 +94,16 @@ const resolvers = {
     },
   },
   User: {
-    fullName(root) {
-      console.log(root);
-      console.log("fulllName called!");
-      return "hello";
+    firstName({ firstName }) {
+      return firstName;
+    },
+    fullName({ firstName, lastName }) {
+      return `${firstName} ${lastName}`;
+    },
+  },
+  Tweet: {
+    author({ userId }) {
+      return users.find((user) => user.id === userId);
     },
   },
 };
